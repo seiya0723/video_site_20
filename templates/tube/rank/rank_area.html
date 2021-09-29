@@ -1,0 +1,60 @@
+{% load static %}
+
+{% if all_ranks %}
+<div>
+    <h3 class="word_blue my-3">総合部門</h3>
+    <div class="preview_control_area">
+        <div class="data_preview_area">
+            {% for all_rank in all_ranks %}
+            <div class="data_preview_frame">
+                <div class="data_preview_header rank_header">{{ forloop.counter }}位 {{ all_rank.score }}pt</div>
+                <a href="{% url 'tube:single' all_rank.target.id  %}" class="data_preview_content">
+                    {% if all_rank.target.thumbnail %}
+                    <div class="data_preview_content_thumbnail"><img src="{{ all_rank.target.thumbnail.url }}" alt="no_img"></div>
+                    {% else %}
+                    <div class="data_preview_content_thumbnail"><img src="{% static 'tube/img/no_image.jpg' %}" alt="no_img"></div>
+                    {% endif %}
+                    <div class="data_preview_content_title word">{{ all_rank.target.title|truncatechars_html:12  }}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="control_button previous_button">Prev</div>
+        <div class="control_button next_button">Next</div>
+    </div>
+</div>
+{% endif %}
+
+
+
+{% for cate_rank in cate_ranks %}
+<div>
+
+    {% if cate_rank %}
+    <h3 class="word_blue my-3">{{ cate_rank.category }}部門</h3>
+
+    <div class="preview_control_area">
+        <div class="data_preview_area">
+            {% for rank in cate_rank.ranks %}
+            <div class="data_preview_frame">
+                <div class="data_preview_header rank_header">{{ forloop.counter }}位 {{ rank.score }}pt</div>
+                <a href="{% url 'tube:single' rank.target.id %}" class="data_preview_content">
+                    {% if rank.target.thumbnail %}
+                    <div class="data_preview_content_thumbnail"><img src="{{ rank.target.thumbnail.url }}" alt="no_img"></div>
+                    {% else %}
+                    <div class="data_preview_content_thumbnail"><img src="{% static 'tube/img/no_image.jpg' %}" alt="no_img"></div>
+                    {% endif %}
+                    <div class="data_preview_content_title word">{{ rank.target.title|truncatechars_html:12 }}</div>
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="control_button previous_button">Prev</div>
+        <div class="control_button next_button">Next</div>
+    </div>
+    {% endif %}
+
+</div>
+{% endfor %}
+
+

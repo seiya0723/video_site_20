@@ -1,0 +1,220 @@
+{% extends "tube/base.html" %}
+{% load humanize %}
+{% load static %}
+{% load param_change %}
+
+{% block main %}
+
+{% block extra_head %}
+{{ block.super }}
+{% endblock %}
+
+
+{% block page_title %}{% endblock %}
+
+
+{% include "tube/search_form.html" %}
+
+<br class="my-2">
+
+<input id="tab_system_radio_0" class="tab_system_radio" type="radio" name="tab_system_radio" checked>
+<input id="tab_system_radio_1" class="tab_system_radio" type="radio" name="tab_system_radio">
+<input id="tab_system_radio_2" class="tab_system_radio" type="radio" name="tab_system_radio">
+<input id="tab_system_radio_3" class="tab_system_radio" type="radio" name="tab_system_radio">
+
+
+<div class="tab_system_label_area">
+    <label class="tab_system_label" for="tab_system_radio_0">New Videos</label>
+    <label class="tab_system_label" for="tab_system_radio_1">New Topics</label>
+
+    {% if request.user.is_authenticated %}
+    <label class="tab_system_label" for="tab_system_radio_2">Follows</label>
+    {% endif %}
+
+    {% if advertisements %}
+    <label class="tab_system_label" for="tab_system_radio_3">Shopping</label>
+    {% endif %}
+</div>
+
+
+<div id="tab_system_area_0" class="tab_system_area">
+
+    <div class="index_category_area my-3">
+    {% for category in categories %}
+        <div class="mr-3">
+            <a class="index_category" href="{% url 'tube:index' %}?category={{ category.name }}">{{ category.name }}</a>
+        </div>
+
+    {% endfor %}
+    </div>
+
+
+    {% if amount > 0 %}
+    <ul><li>{{ amount }}件中、{{ latests|length }}件表示しています。</li></ul>
+    {% endif %}
+
+    <div class="video_content_list">
+
+        {% for latest in latests %}
+        <div class="video_content">
+            <a class="video_content_link" href="{% url 'tube:single' latest.id %}">
+                {% if latest.thumbnail %}
+                <img class="video_thumbnail" src="{{ latest.thumbnail.url }}" alt="{{ latest.title }}">
+                {% else %}
+                <img class="video_thumbnail" src="{% static 'tube/img/no_image.jpg' %}" alt="{{ latest.title }}">
+                {% endif %}
+            </a>
+
+            <div class="index_video_content_inner">
+                <div class="index_video_content_inner_left">
+                    {% if latest.user.usericon %}
+                    <a href="{% url 'tube:usersingle' latest.user.id %}"><img class="index_usericon" src="{{ latest.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' latest.user.id %}"><img class="index_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+
+                <div class="index_video_content_inner_right">
+                    <a href="{% url 'tube:single' latest.id %}">
+                        <div class="video_title">{{ latest.title|truncatechars_html:25 }}</div>
+                    </a>
+                    <a class="word" href="{% url 'tube:usersingle' latest.user.id %}"><div>{{ latest.user.handle_name }} </div></a>
+                    <div class="video_value">
+                        <span class="v_value_span"><i class="far fa-play-circle"></i>{{ latest.views|intcomma }}</span>
+                        <span class="v_value_span"><i class="far fa-comment"></i>{{ latest.comment.all|length }}</span>
+                        <span class="v_value_span"><i class="far fa-list-alt"></i>{{ latest.video_mylist.all|length }}</span>
+                    </div>
+                    <div class="word">{{ latest.dt }}</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div>動画がありません</div>
+        {% endfor %}
+    </div>
+
+    {% generate_pagelink request "page" "1" latests.paginator.num_pages latests.number %}
+
+</div>
+
+<div id="tab_system_area_1" class="tab_system_area">
+
+    {% for topic in topics %}
+    <div class="topic_content border">
+        <div class="topic_content_inner">
+            <div class="topic_content_inner_left">
+            {% if topic.user.usericon %}
+            <a href="{% url 'tube:usersingle' topic.user.id %}"><img class="topic_usericon" src="{{ topic.user.usericon.url }}" alt="icon"></a>
+            {% else %}
+            <a href="{% url 'tube:usersingle' topic.user.id %}"><img class="topic_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+            {% endif %}
+            </div>
+
+            <div class="topic_content_inner_right">
+                <div>{{ topic.user.handle_name }}<span class="word pl-3">{{ topic.dt }}</span></div>
+                <div>{{ topic.content|linebreaksbr|urlize}}</div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{# follow user videos #}
+<div id="tab_system_area_2" class="tab_system_area">
+
+    {% if f_amount > 0 %}
+    <ul><li>{{ f_amount }}件中、{{ follows|length }}件表示しています。</li></ul>
+    {% endif %}
+
+    {% if follows %}
+
+    <div class="video_content_list">
+
+        {% for follow in follows %}
+        <div class="video_content">
+            <a class="video_content_link" href="{% url 'tube:single' follow.id %}">
+                {% if follow.thumbnail %}
+                <img class="video_thumbnail" src="{{ follow.thumbnail.url }}" alt="{{ follow.title }}">
+                {% else %}
+                <img class="video_thumbnail" src="{% static 'tube/img/no_image.jpg' %}" alt="{{ follow.title }}">
+                {% endif %}
+            </a>
+
+            <div class="index_video_content_inner">
+                <div class="index_video_content_inner_left">
+                    {% if follow.user.usericon %}
+                    <a href="{% url 'tube:usersingle' follow.user.id %}"><img class="index_usericon" src="{{ follow.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' follow.user.id %}"><img class="index_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+
+                <div class="index_video_content_inner_right">
+                    <a href="{% url 'tube:single' follow.id %}"><div class="video_title">{{ follow.title }}</div></a>
+                    <a class="word" href="{% url 'tube:usersingle' follow.user.id %}"><div>{{ follow.user.handle_name }}</div></a>
+                        <div class="video_value">
+                            <span class="v_value_span"><i class="far fa-play-circle"></i>{{ follow.views|intcomma }}</span>
+                            <span class="v_value_span"><i class="far fa-comment"></i>{{ follow.comment.all|length }}</span>
+                            <span class="v_value_span"><i class="far fa-list-alt"></i>{{ follow.video_mylist.all|length }}</span>
+                        </div>
+                        <div class="word">{{ follow.dt|date:"Y年m月d日" }}</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div>動画がありません</div>
+        {% endfor %}
+    </div>
+
+        {% generate_pagelink request "page" "1" follows.paginator.num_pages follows.number %}
+
+    {% endif %}
+</div>
+
+{# 広告動画 #}
+<div id="tab_system_area_3" class="tab_system_area">
+
+    <div class="video_content_list">
+
+        {% for advertisement in advertisements %}
+        <div class="video_content">
+            <a class="video_content_link" href="{% url 'tube:advertising_video_single' advertisement.id %}">
+                {% if advertisement.thumbnail %}
+                <img class="video_thumbnail" src="{{ advertisement.thumbnail.url }}" alt="{{ advertisement.title }}">
+                {% else %}
+                <img class="video_thumbnail" src="{% static 'tube/img/no_image.jpg' %}" alt="{{ advertisement.title }}">
+                {% endif %}
+            </a>
+
+            <div class="index_video_content_inner">
+                <div class="index_video_content_inner_left">
+                    {% if advertisement.user.usericon %}
+                    <a href="{% url 'tube:usersingle' advertisement.user.id %}"><img class="index_usericon" src="{{ advertisement.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' advertisement.user.id %}"><img class="index_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+
+                <div class="index_video_content_inner_right">
+                    <a href="{% url 'tube:advertising_video_single' advertisement.id %}">
+                        <div class="video_title">{{ advertisement.title|truncatechars_html:25 }}</div>
+                    </a>
+                    <a class="word" href="{% url 'tube:usersingle' advertisement.user.id %}"><div>{{ advertisement.user.handle_name }} </div></a>
+                    <div class="video_value">
+                        <span class="v_value_span"><i class="far fa-play-circle"></i>{{ advertisement.views|intcomma }}</span>
+
+                    </div>
+                    <div class="word">{{ advertisement.dt }}</div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div>動画がありません</div>
+        {% endfor %}
+    </div>
+</div>
+
+
+{% endblock %}
+

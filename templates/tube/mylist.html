@@ -1,0 +1,62 @@
+{% extends "tube/mypage_base.html" %}
+{% load static %}
+{% load param_change %}
+
+{% block extra_head %}
+{{ block.super }}
+
+<script src="{% static 'tube/js/mylist_delete.js' %}"></script>
+
+{% endblock %}
+
+{% block mypage_content %}
+
+<h2 class="word_blue">マイリスト</h2>
+
+{% if amount > 0 %}
+<div>{{ amount }}件中、{{ mylists|length }}件表示しています。</div>
+
+<div class="notify_control_area">
+    <form name="mylist_clear_form" action="{% url 'tube:mylist' %}" method="POST">
+        {% csrf_token %}
+        <input class="notify_control_button"  type="submit" value="マイリストを空にする。">
+    </form>
+    <form id="mylist_clear_form" name="mylist_clear_form" action="{% url 'tube:mylist' %}" method="DELETE">
+        {% csrf_token %}
+        <button id="mylist_clear_btn" class="notify_control_button"  type="button">checkを削除</button>
+    </form>
+</div>
+{% endif %}
+
+{% for mylist in mylists %}
+<input id="mylist_chk_{{ mylist.id }}" class="mylist_chk" type="checkbox" name="mylist_chk" value="{{ mylist.id }}">
+<label class="mylist_chk_label" for="mylist_chk_{{ mylist.id }}">
+
+<div class="video_list_view">
+
+    <div class="video_list_thumbnail_area">
+        {% if mylist.target.thumbnail %}
+        <a class="video_list_thumbnail" href="{% url 'tube:single' mylist.target.id %}"><img src="{{ mylist.target.thumbnail.url }}" alt="thumbnail"></a>
+        {% else %}
+        <a class="video_list_thumbnail" href="{% url 'tube:single' mylist.target.id %}"><img src="{% static 'tube/img/no_image.jpg' %}" alt="thumbnail"></a>
+        {% endif %}
+            
+    </div>
+    <div class="video_list_description_area">
+        <div class="video_list_description_inner">
+            <h5 class="video_list_title"><a class="video_list_title_link" href="{% url 'tube:single' mylist.target.id %}">{{ mylist.target.title }}</a></h5>
+            <div>{{ mylist.target.user.handle_name }}</div>
+            <div class="video_list_description_overflow">{{ mylist.target.description }}</div>
+            <div class="mb-2">登録日時:{{ mylist.dt }}</div>
+        </div>
+    </div>
+</div>
+</label>
+{% empty %}
+<p>マイリストはありません。</p>
+{% endfor %}
+
+{% generate_pagelink request "page" "1" mylists.paginator.num_pages mylists.number %}
+
+
+{% endblock %}

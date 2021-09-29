@@ -1,0 +1,308 @@
+{% extends "tube/mypage_base.html" %}
+{% load static %}
+{% load humanize %}
+{% load param_change %}
+
+{% block extra_head %}
+{{ block.super }}
+<script src="{% static 'tube/js/single.js' %}"></script>
+{% endblock %}
+
+
+{% block mypage_content %}
+
+
+    {% if user %}
+    <div>
+        <div>
+            {% if user.usericon %}
+            <img class="usersingle_usericon" src="{{ user.usericon.url }}" alt="icon">
+            {% else %}
+            <img class="usersingle_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}">
+            {% endif %}
+
+            <h2>{{ user.handle_name }}</h2>
+
+            {% if user.self_introduction %}
+            <div class="array">{{ user.self_introduction|linebreaksbr|urlize }}</div>
+            {% endif %}
+
+            <div class="array word">{{ user.date_joined }}<span class="ml-1">に登録</span></div>
+            <div class="word">動画投稿数：{{ user.posted_user.all|length }}</div>
+            <div class="word mb-2">{{ follow_users|length }} フォロー中<span class="word ml-4">{{ follower_users|length }} フォロワー</span></div>
+
+        </div>
+
+        {% if request.user.is_authenticated and request.user.id != user.id %}  {# 自分自身であればボタンを表示させない#}
+        <div class="array">
+            <form id="follow_user_form_{{ user.id }}" class="usersingle_form" action="{% url 'tube:userfollow' user.id  %}" method="POST">
+                {% csrf_token %}
+                {% if request.user in user.followed.all %}
+                <button class="follow btn btn-primary follow_btn" type="button" value="{{ user.id }}">フォロー中</button>
+                {% else %}
+                <button class="follow btn btn-outline-primary follow_btn" type="button" value="{{ user.id }}">フォローする</button>
+                {% endif %}
+            </form>
+            <form id="block_user_form" class="usersingle_form" action="{% url 'tube:userblock' user.id  %}" method="POST">
+                {% csrf_token %}
+                {% if request.user in user.blocked.all %}
+                <button class="block btn btn-danger follow_btn" type="button">ブロック中</button>
+                {% else %}
+                <button class="block btn btn-outline-danger follow_btn" type="button">ブロックする</button>
+                {% endif %}
+            </form>
+            <form id="private_user_form" class="usersingle_form" action="{% url 'tube:invite' user.id  %}" method="POST">
+                {% csrf_token %}
+                {% if request.user in user.private.all %}
+                <button class="invite btn btn-success follow_btn" type="button">招待中</button>
+                {% else %}
+                <button class="invite btn btn-outline-success follow_btn" type="button">プライベート動画に招待</button>
+                {% endif %}
+            </form>
+        </div>
+        {% endif %}
+
+        {% comment %}
+        ここでタブシステムを使う。
+            スマホ表示時、普通のタブシステムだと折り返されるので、overflow-xとwhite-space:nowrapを組み合わせ、横スクロール形式に仕立てる。
+            ラジオチェック時にラベルを装飾する際に指定するセレクタも変わるので、それに合わせる。
+        {% endcomment %}
+
+        <input id="tab_system_radio_0" class="tab_system_radio" type="radio" name="tab_system_radio" checked>
+        <input id="tab_system_radio_1" class="tab_system_radio" type="radio" name="tab_system_radio">
+        <input id="tab_system_radio_2" class="tab_system_radio" type="radio" name="tab_system_radio">
+        <input id="tab_system_radio_3" class="tab_system_radio" type="radio" name="tab_system_radio">
+        <input id="tab_system_radio_4" class="tab_system_radio" type="radio" name="tab_system_radio">
+        <input id="tab_system_radio_5" class="tab_system_radio" type="radio" name="tab_system_radio">
+        <input id="tab_system_radio_6" class="tab_system_radio" type="radio" name="tab_system_radio">
+
+        <div class="tab_system_label_area">
+            <label class="tab_system_label" for="tab_system_radio_0">掲示板</label>
+            <label class="tab_system_label" for="tab_system_radio_1">投稿動画</label>
+            <label class="tab_system_label" for="tab_system_radio_2">フォロー中</label>
+            <label class="tab_system_label" for="tab_system_radio_3">フォロワー</label>
+
+            {% if request.user.is_authenticated and request.user.id == user.id %} {# 自分自身の時だけ表示 #}
+            <label class="tab_system_label" for="tab_system_radio_4">ブロック中</label>
+            <label class="tab_system_label" for="tab_system_radio_5">プライベート動画</label>
+            <label class="tab_system_label" for="tab_system_radio_6">招待者リスト</label>
+            {% endif %}
+
+            {# 許可された人だけに表示 #}
+            {% for p in private_users %}
+            {% if request.user == p.to_user %}
+                <label class="tab_system_label" for="tab_system_radio_5">プライベート動画</label>
+            {% endif %}
+            {% endfor %}
+
+
+        </div>
+
+        {# 掲示板 #}
+        <div id="tab_system_area_0" class="tab_system_area">
+
+            {% if request.user.is_authenticated and request.user.id == user.id %} {# 掲示板投稿欄は自分自身の時だけ表示 #}
+            <form action="{% url 'tube:topic' user.id %}" method="POST">
+                {% csrf_token %}
+                <textarea class="topic_text" name="content" placeholder="What's new? (200)" rows="2" maxlength="200"></textarea>
+                <button class="v_c_submit_button btn btn-outline-primary" type="submit"><i class="far fa-paper-plane"></i></button>
+            </form>
+            {% endif %}
+
+            {% for topic in topics %}
+            <div class="topic_content border">
+                <div class="topic_content_inner">
+                    <div class="topic_content_inner_left">
+                    {% if topic.user.usericon %}
+                    <a href="{% url 'tube:usersingle' topic.user.id %}"><img class="topic_usericon" src="{{ topic.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' topic.user.id %}"><img class="topic_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                    </div>
+
+                    <div class="topic_content_inner_right">
+                        <div>{{ topic.user.handle_name }}<span class="word pl-3">{{ topic.dt }}</span></div>
+                        <div>{{ topic.content|linebreaksbr|urlize}}</div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <div id="tab_system_area_1" class="tab_system_area">
+
+            {% if amount > 0 %}
+            <ul><li>{{ amount }}件中、{{ videos|length }}件表示しています。</li></ul>
+            {% endif %}
+
+            <div class="video_content_list">
+                {% for video in videos %}
+                <div class="mypage_video_content">
+                    <a class="video_content_link" href="{% url 'tube:single' video.id %}">
+                        {% if video.thumbnail %}
+                        <img class="mypage_thumbnail" src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
+                        {% else %}
+                        <img class="mypage_thumbnail" src="{% static 'tube/img/no_image.jpg' %}" alt="{{ video.title }}">
+                        {% endif %}
+                    </a>
+
+                    <div class="usersingle_video_content">
+                        <div class="video_title">{{ video.title|truncatechars_html:25 }}</div>
+                        <div class="video_value">
+                            <span class="v_value_span"><i class="far fa-play-circle"></i>{{ video.views|intcomma }}</span>
+                            <span class="v_value_span"><i class="far fa-comment"></i>{{ video.comment.all|length }}</span>
+                            <span class="v_value_span"><i class="far fa-list-alt"></i>{{ video.video_mylist.all|length }}</span>
+                        </div>
+                        <div class="word">{{ video.dt|date:"Y年m月d日 H時" }}</div>
+                        <div class="word">{{ video.category }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div>投稿した動画はありません。</div>
+                {% endfor %}
+            </div>
+            {% generate_pagelink request "page" "1" videos.paginator.num_pages videos.number %}
+
+        </div>
+
+        <div id="tab_system_area_2" class="tab_system_area">
+
+            <h3>{{ follow_users|length }}&nbsp;フォロー中</h3>
+            {% for follow_user in follow_users %}
+            <div class="user_single_inner">
+                <div class="user_single_sub_inner">
+                    <div class="user_single_sub_inner_left">
+                        {% if follow_user.to_user.usericon %}
+                        <a href="{% url 'tube:usersingle' follow_user.to_user.id  %}"><img class="video_usericon" src="{{ follow_user.to_user.usericon.url }}" alt="icon"></a>
+                        {% else %}
+                        <a href="{% url 'tube:usersingle' follow_user.to_user.id  %}"><img class="video_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                        {% endif %}
+
+                    </div>
+                    <div class="user_single_sub_inner_right">
+                        <a href="{% url 'tube:usersingle' follow_user.to_user.id  %}">{{ follow_user.to_user.handle_name }}</a>
+                        <div class="follow_btn_area">{% include "tube/follow_btn.html" with target=follow_user.to_user %}</div>
+                        <p class="user_single_p">{{ follow_user.to_user.self_introduction|truncatechars_html:25 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor%}
+
+        </div>
+
+        <div id="tab_system_area_3" class="tab_system_area">
+
+            <h3>{{ follower_users|length }}&nbsp;フォロワー</h3>
+            {% for follow_user in follower_users %}
+            <div class="user_single_inner">
+                <div class="user_single_sub_inner">
+                    <div class="user_single_sub_inner_left">
+                        {% if follow_user.from_user.usericon %}
+                        <a href="{% url 'tube:usersingle' follow_user.from_user.id  %}"><img class="video_usericon" src="{{ follow_user.from_user.usericon.url }}" alt="icon"></a>
+                        {% else %}
+                        <a href="{% url 'tube:usersingle' follow_user.from_user.id  %}"><img class="video_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                        {% endif %}
+                    </div>
+                    <div class="user_single_sub_inner_right">
+                        <a href="{% url 'tube:usersingle' follow_user.from_user.id  %}">{{ follow_user.from_user.handle_name }}</a>
+                        <div class="follow_btn_area">{% include "tube/follow_btn.html" with target=follow_user.from_user  follow=follower %}</div>
+                        <p class="user_single_p">{{ follow_user.from_user.self_introduction|truncatechars_html:25 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor%}
+
+        </div>
+
+        <div id="tab_system_area_4" class="tab_system_area">
+
+            <h3>ブロック中</h3>
+            {# blockを変数名にしてしまうとシンタックスカラーなどで問題あり(テンプレートタグのblockと解釈される)のため、block_userとする #}
+            {% for block_user in block_users %}
+            <div class="user_single_inner">
+                <div class="user_single_sub_inner">
+                    <div class="user_single_sub_inner_left">
+                        {% if block_user.to_user.usericon %}
+                        <a href="{% url 'tube:usersingle' block_user.to_user.id  %}"><img class="video_usericon" src="{{ block_user.to_user.usericon.url }}" alt="icon"></a>
+                        {% else %}
+                        <a href="{% url 'tube:usersingle' block_user.to_user.id  %}"><img class="video_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                        {% endif %}
+                    </div>
+                    <div class="user_single_sub_inner_right">
+                        <a href="{% url 'tube:usersingle' block_user.to_user.id  %}">{{ block_user.to_user.handle_name }}</a>
+                        <p>{{ block_user.to_user.self_introduction|truncatechars_html:35 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor%}
+
+        </div>
+        <div id="tab_system_area_5" class="tab_system_area">
+
+            {% if p_amount > 0 %}
+            <ul><li>{{ p_amount }}件中、{{ private_videos|length }}件表示しています。</li></ul>
+            {% endif %}
+
+            <div class="video_content_list">
+                {% for video in private_videos %}
+                <div class="mypage_video_content">
+                    <a class="video_content_link" href="{% url 'tube:single' video.id %}">
+                        {% if video.thumbnail %}
+                        <img class="mypage_thumbnail" src="{{ video.thumbnail.url }}" alt="{{ video.title }}">
+                        {% else %}
+                        <img class="mypage_thumbnail" src="{% static 'tube/img/no_image.jpg' %}" alt="{{ video.title }}">
+                        {% endif %}
+                    </a>
+
+                    <div class="usersingle_video_content">
+                        <div class="video_title">{{ video.title|truncatechars_html:25 }}</div>
+                        <div class="video_value">
+                            <span class="v_value_span"><i class="far fa-play-circle"></i>{{ video.views|intcomma }}</span>
+                            <span class="v_value_span"><i class="far fa-comment"></i>{{ video.comment.all|length }}</span>
+                            <span class="v_value_span"><i class="far fa-list-alt"></i>{{ video.video_mylist.all|length }}</span>
+                        </div>
+                        <div class="word">{{ video.dt|date:"Y年m月d日 H時" }}</div>
+                        <div class="word">{{ video.category }}</div>
+                    </div>
+                </div>
+                {% empty %}
+                <div>投稿した動画はありません。</div>
+                {% endfor %}
+            </div>
+            {% generate_pagelink request "page" "1" private_videos.paginator.num_pages private_videos.number %}
+        </div>
+
+        <div id="tab_system_area_6" class="tab_system_area">
+
+            <h3>{{ private_users|length }}&nbsp;人招待中</h3>
+            {% for private_user in private_users %}
+            <div class="user_single_inner">
+                <div class="user_single_sub_inner">
+                    <div class="user_single_sub_inner_left">
+                        {% if private_user.to_user.usericon %}
+                        <a href="{% url 'tube:usersingle' private_user.to_user.id  %}"><img class="video_usericon" src="{{ private_user.to_user.usericon.url }}" alt="icon"></a>
+                        {% else %}
+                        <a href="{% url 'tube:usersingle' private_user.to_user.id  %}"><img class="video_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                        {% endif %}
+                    </div>
+                    <div class="user_single_sub_inner_right">
+                        <a href="{% url 'tube:usersingle' private_user.to_user.id  %}">{{ private_user.to_user.handle_name }}</a>
+
+                        <p class="user_single_p">{{ private_user.to_user.self_introduction|truncatechars_html:35 }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor%}
+
+        </div>
+
+
+    </div>
+    {% else %}
+        <div>ユーザーが見つかりませんでした</div>
+    {% endif %}
+
+{% endblock %}
+
+

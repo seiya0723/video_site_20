@@ -1,0 +1,31 @@
+{% if target == follow_user.to_user %}
+    {# フォローユーザーの一覧のフォローボタン #}
+    {% if request.user.is_authenticated and request.user.id != target.id %}  {# 自分自身であればボタンを表示させない#}
+
+    <form id="follow_user_form_{{ target.id }}" class="usersingle_form" action="{% url 'tube:userfollow' target.id  %}" method="POST">
+        {% csrf_token %}
+        {% if request.user in target.followed.all %}
+        <button class="follow btn btn-primary btn-sm follow_btn" type="button" value="{{ target.id }}">フォロー中</button>
+        {% else %}
+        <button class="follow btn btn-outline-primary btn-sm follow_btn" type="button" value="{{ target.id }}">フォローする</button>
+        {% endif %}
+    </form>
+
+    {% endif %}
+{% endif %}
+
+{% if target == follow_user.from_user %}
+    {# フォローワーの一覧のフォローボタン #}
+    {% if request.user.is_authenticated and request.user.id != target.id %}  {# 自分自身であればボタンを表示させない#}
+
+    <form id="follower_user_form_{{ target.id }}" class="usersingle_form" action="{% url 'tube:userfollow' target.id  %}" method="POST">
+        {% csrf_token %}
+        {% if request.user in target.followed.all %}
+        <button class="follower btn btn-primary btn-sm follow_btn" type="button" value="{{ target.id }}">フォロー中</button>
+        {% else %}
+        <button class="follower btn btn-outline-primary btn-sm follow_btn" type="button" value="{{ target.id }}">フォローする</button>
+        {% endif %}
+    </form>
+
+    {% endif %}
+{% endif %}

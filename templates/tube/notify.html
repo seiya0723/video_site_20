@@ -1,0 +1,332 @@
+{% extends "tube/mypage_base.html" %}
+{% load static %}
+
+
+{% block extra_head %}
+{{ block.super }}
+
+<script src="{% static 'tube/js/notify.js' %}"></script>
+<script src="{% static 'tube/js/already_read.js' %}"></script>
+
+{% endblock %}
+
+
+{% block mypage_content %}
+
+<input id="tab_system_radio_0" class="tab_system_radio" type="radio" name="tab_system_radio" checked>
+<input id="tab_system_radio_1" class="tab_system_radio" type="radio" name="tab_system_radio">
+<input id="tab_system_radio_2" class="tab_system_radio" type="radio" name="tab_system_radio">
+
+<div class="tab_system_label_area">
+    <label class="tab_system_label" for="tab_system_radio_0">承認待ち</label>
+    <label class="tab_system_label" for="tab_system_radio_1">動画コメント</label>
+    <label class="tab_system_label" for="tab_system_radio_2">お知らせ</label>
+</div>
+
+{# 承認待ちコメント #}
+<div id="tab_system_area_0" class="tab_system_area">
+
+    <div class="notify_control_area">
+        <form id="comment_delete0" action="{% url 'tube:comment_already_read'%}" name="comment_delete0" method="DELETE">
+            {% csrf_token %}
+            <button id="comment_delete_btn0" class="notify_control_button" type="button">checkを削除</button>
+        </form>
+        <form id="already_read0" action="{% url 'tube:comment_approval' %}" name="already_read0" method="PATCH">
+            {% csrf_token %}
+            <button id="notify_comment_approval_btn" class="notify_control_button" type="button">checkを承認</button>
+        </form>
+        <form action="{% url 'tube:comment_approval' %}" name="comment_all_approval" method="POST">
+            {% csrf_token %}
+            <button class="notify_control_button" type="submit">全て承認</button>
+        </form>
+    </div>
+
+    <div>
+    {% if comments_approval %}
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">動画コメント</p>
+            </div>
+
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">動画タイトル</p>
+            </div>
+        </div>
+        {% for c in comments_approval %}
+        <input id="notify_chk0_{{ c.id }}" class="notify_comment" type="checkbox" name="comment_approval" value="{{ c.id }}">
+        <label class="notify_comment_label" for="notify_chk0_{{ c.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if c.user.usericon %}
+                    <a href="{% url 'tube:usersingle' c.user.id %}"><img class="notify_usericon" src="{{ c.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' c.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ c.user.handle_name }}</div>
+                    <div>{{ c.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ c.dt }}</div>
+                </div>
+            </div>
+
+            <div class="notify_comment_area_middle">
+                <p><a href="{% url 'tube:single' c.target.id %}"><i class="fab fa-youtube"></i>{{ c.target }}</a></p>
+            </div>
+        </div>
+        </label>
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div>
+    {% if replies_approval %}
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">2次コメント</p>
+            </div>
+
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">対象コメント/動画</p>
+            </div>
+        </div>
+        {% for r in replies_approval %}
+        <input id="notify_chk0_{{ r.id }}" class="notify_comment" type="checkbox" name="comment_approval" value="{{ r.id }}">
+        <label class="notify_comment_label" for="notify_chk0_{{ r.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if r.user.usericon %}
+                    <a href="{% url 'tube:usersingle' r.user.id %}"><img class="notify_usericon" src="{{ r.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' r.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ r.user.handle_name }}</div>
+                    <div>{{ r.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ r.dt }}</div>
+                </div>
+            </div>
+            <div class="notify_comment_area_middle">
+                <span>{{ r.target }}/</span>
+                <span><a href="{% url 'tube:single' r.target.target.id %}"><i class="fab fa-youtube"></i>{{ r.target.target }}</a></span>
+            </div>
+
+        </div>
+        </label>
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div>
+    {% if r_to_r_approval %}
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">3次コメント</p>
+            </div>
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">対象コメント/動画</p>
+            </div>
+        </div>
+        {% for reply in r_to_r_approval %}
+        <input id="notify_chk0_{{ reply.id }}" class="notify_comment" type="checkbox" name="comment_approval" value="{{ reply.id }}">
+        <label class="notify_comment_label" for="notify_chk0_{{ reply.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if reply.user.usericon %}
+                    <a href="{% url 'tube:usersingle' reply.user.id %}"><img class="notify_usericon" src="{{ reply.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' reply.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ reply.user.handle_name }}</div>
+                    <div>{{ reply.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ reply.dt }}</div>
+                </div>
+            </div>
+            <div class="notify_comment_area_middle">
+                <span>{{ reply.target }}/</span>
+                <span>{{ reply.target.target }}/</span>
+                <span><a href="{% url 'tube:single' reply.target.target.target.id %}"><i class="fab fa-youtube"></i>{{ reply.target.target.target }}</a></span>
+            </div>
+        </div>
+        </label>
+        {% endfor %}
+    {% endif %}
+    </div>
+
+</div>
+
+{# 動画の未読コメント #}
+<div id="tab_system_area_1" class="tab_system_area">
+
+    <div class="notify_control_area">
+        <form id="comment_delete" action="{% url 'tube:comment_already_read'%}" name="comment_delete" method="DELETE">
+            {% csrf_token %}
+            <button id="comment_delete_btn" class="notify_control_button" type="button">checkを削除</button>
+        </form>
+        <form id="already_read" action="{% url 'tube:comment_already_read'%}" name="already_read" method="PATCH">
+            {% csrf_token %}
+            <button id="read_btn" class="notify_control_button" type="button">checkを既読</button>
+        </form>
+        <form action="{% url 'tube:comment_already_read' %}" name="all_delete" method="POST">
+            {% csrf_token %}
+            <button class="notify_control_button" type="submit">全て既読</button>
+        </form>
+    </div>
+
+    <div>
+    {% if comments %}
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">動画コメント</p>
+            </div>
+
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">動画タイトル</p>
+            </div>
+        </div>
+        {% for c in comments %}
+        <input id="notify_chk_{{ c.id }}" class="notify_comment" type="checkbox" name="already_read" value="{{ c.id }}"> {# コメント既読：comment_already_read へ #}
+        <label class="notify_comment_label" for="notify_chk_{{ c.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if c.user.usericon %}
+                    <a href="{% url 'tube:usersingle' c.user.id %}"><img class="notify_usericon" src="{{ c.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' c.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ c.user.handle_name }}</div>
+                    <div>{{ c.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ c.dt }}</div>
+                </div>
+            </div>
+            <div class="notify_comment_area_middle">
+                <p><a href="{% url 'tube:single' c.target.id %}"><i class="fab fa-youtube"></i>{{ c.target }}</a></p>
+            </div>
+        </div>
+        </label>
+        {% endfor %}
+
+    {% endif %}
+    </div>
+    <div>
+    {% if replies %}
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">2次コメント</p>
+            </div>
+
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">対象コメント/動画</p>
+            </div>
+        </div>
+        {% for r in replies %}
+        <input id="notify_chk_{{ r.id }}" class="notify_comment" type="checkbox" name="already_read" value="{{ r.id }}"> {# ２次コメント既読：comment_already_readへ #}
+        <label class="notify_comment_label" for="notify_chk_{{ r.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if r.user.usericon %}
+                    <a href="{% url 'tube:usersingle' r.user.id %}"><img class="notify_usericon" src="{{ r.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' r.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ r.user.handle_name }}</div>
+                    <div>{{ r.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ r.dt }}</div>
+                </div>
+            </div>
+            <div class="notify_comment_area_middle">
+                <span>{{ r.target }}/</span>
+                <span><a href="{% url 'tube:single' r.target.target.id %}"><i class="fab fa-youtube"></i>{{ r.target.target }}</a></span>
+            </div>
+        </div>
+        </label>
+        {% endfor %}
+    {% endif %}
+    </div>
+    <div>
+    {% if r_to_r %}
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <p class="notify_p">3次コメント</p>
+            </div>
+            <div class="notify_comment_area_middle">
+                <p class="notify_p">対象コメント/動画</p>
+            </div>
+        </div>
+        {% for reply in r_to_r %}
+        <input id="notify_chk_{{ reply.id }}" class="notify_comment" type="checkbox" name="already_read" value="{{ reply.id }}"> {# 3次コメント既読：comment_already_read へ #}
+        <label class="notify_comment_label" for="notify_chk_{{ reply.id }}">
+
+        <div class="notify_content_inner">
+            <div class="notify_comment_area_left">
+                <div class="notify_comment_area_1">
+                    {% if reply.user.usericon %}
+                    <a href="{% url 'tube:usersingle' reply.user.id %}"><img class="notify_usericon" src="{{ reply.user.usericon.url }}" alt="icon"></a>
+                    {% else %}
+                    <a href="{% url 'tube:usersingle' reply.user.id %}"><img class="notify_usericon" src="{% static 'tube/img/non_usericon.png' %}" alt="{{ icon }}"></a>
+                    {% endif %}
+                </div>
+                <div class="notify_comment_area_2">
+                    <div class="word">{{ reply.user.handle_name }}</div>
+                    <div>{{ reply.content|linebreaksbr|urlize }}</div>
+                    <div class="notify_dt">{{ reply.dt }}</div>
+                </div>
+            </div>
+            <div class="notify_comment_area_middle">
+                <span>{{ reply.target }}/</span>
+                <span>{{ reply.target.target }}/</span>
+                <span><a href="{% url 'tube:single' reply.target.target.target.id %}"><i class="fab fa-youtube"></i>{{ reply.target.target.target }}</a></span>
+            </div>
+        </div>
+        </label>
+        {% endfor %}
+    {% endif %}
+    </div>
+
+</div>
+
+{# お知らせ #}
+<div id="tab_system_area_2" class="tab_system_area">
+
+    <div class="notify_control_area">
+        <form action="{% url 'tube:notify' %}" method="POST">
+            {% csrf_token %}
+            <button class="notify_control_button" type="submit">既読を削除</button>
+        </form>
+        <span id="notify_all_close" class="notify_control_button">全て閉じる</span>
+        <span id="notify_all_open"  class="notify_control_button">全て開く</span>
+    </div>
+
+    {% for notify_target in notify_targets %}
+    <div class="notify_content_area">
+        <input id="{{ notify_target.id }}" class="notify_content_chk" type="checkbox" value="{% if not notify_target.read %}{{ notify_target.notify.id }}{% endif %}">
+        <label for="{{ notify_target.id }}" class="notify_content_label">
+            {% if not notify_target.read %}<i class="fas fa-exclamation-circle"></i>{% endif %}
+            [{{ notify_target.notify.category }}] {{ notify_target.notify.title }}
+        </label>
+        <div class="notify_content_body">
+            <div class="notify_content">{{ notify_target.notify.content|linebreaksbr }}</div>
+            <div class="notify_dt">通知日時:{{ notify_target.dt }}</div>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+{% endblock %}

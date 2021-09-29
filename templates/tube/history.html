@@ -1,0 +1,43 @@
+{% extends "tube/mypage_base.html" %}
+{% load static %}
+{% load param_change %}
+
+
+{% block mypage_content %}
+
+<h2 class="word_blue">視聴履歴</h2>
+
+
+    {% if amount > 0 %}
+    <div>{{ amount }}件中、{{ histories|length }}件表示しています。</div>
+    {% endif %}
+
+{% for history in histories %}
+<div class="video_list_view">
+
+    <div class="video_list_thumbnail_area">
+        {% if history.target.thumbnail %}
+        <a class="video_list_thumbnail" href="{% url 'tube:single' history.target.id %}"><img src="{{ history.target.thumbnail.url }}" alt="thumbnail"></a>
+        {% else %}
+        <a class="video_list_thumbnail" href="{% url 'tube:single' history.target.id %}"><img src="{% static 'tube/img/no_image.jpg' %}" alt="thumbnail"></a>
+        {% endif %}
+    
+    </div>
+    <div class="video_list_description_area">
+        <div class="video_list_description_inner">
+            <h5 class="video_list_title"><a class="video_list_title_link" href="{% url 'tube:single' history.target.id %}">{{ history.target.title|truncatechars_html:35 }}</a></h5>
+            <div>{{ history.target.user.handle_name }}</div>
+            <div class="video_list_description_overflow">{{ history.target.description|truncatechars_html:35 }}</div>
+            <div>視聴日時:&nbsp;{{ history.dt }}</div>
+            <div>{{ history.views }} views</div>
+        </div>
+    </div>
+
+</div>
+{% empty %}
+<p>視聴履歴はありません。</p>
+{% endfor %}
+
+     {% generate_pagelink request "page" "1" histories.paginator.num_pages histories.number %}
+
+{% endblock %}

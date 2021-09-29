@@ -1,0 +1,40 @@
+{% extends "tube/mypage_base.html" %}
+{% load static %}
+
+{% block extra_head %}
+{{ block.super }}
+<script src="{% static 'tube/js/config.js' %}"></script>
+
+{% endblock %}
+
+{% block mypage_content %}
+
+<h2>設定</h2>
+
+        <form class="video_comment_refuse_form" method="POST" {% if refuse.video_comment_refuse %} action="{% url 'tube:comment_accept' %}" {% else %}action="{% url 'tube:config'%}"{% endif %}>
+            {% csrf_token %}
+            <input id="comment_refuse" class="comment_refuse_btn" type="checkbox" name="comment_refuse_btn" {% if refuse.video_comment_refuse %} checked {% endif %}>
+            <label class="comment_refuse_label" for="comment_refuse"></label>
+
+            {% if refuse.video_comment_refuse %}
+                <div class="config_style">コメント拒否中。全動画のコメントを受け付ける。</div>
+            {% else %}
+                <div class="config_style">全動画のコメントを受け付けない。</div>
+            {% endif %}
+        </form>
+
+
+        <form class="video_comment_approval_form" method="POST" {% if approval.video_comment_approval %} action="{% url 'tube:comment_approval1' %}" {% else %}action="{% url 'tube:comment_approval2'%}"{% endif %}>
+            {% csrf_token %}
+            <input id="comment_approval" class="comment_approval_btn" type="checkbox" {% if approval.video_comment_approval %} checked {% endif %}>
+            <label class="comment_approval_label" for="comment_approval"></label>
+
+            {% if approval.video_comment_approval %}
+                <div class="config_style">全ての動画のコメント承認制を解除する。</div>
+            {% else %}
+                <div class="config_style">全ての動画のコメントを承認制にする。</div>
+            {% endif %}
+        </form>
+
+
+{% endblock %}
